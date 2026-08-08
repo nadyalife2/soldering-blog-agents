@@ -1,41 +1,124 @@
 # Soldering Blog Agents
 
-Три агента, работающие единой цепочкой с таблицей `semantic_core` на Google Drive.
+**Три + два агента для автоматического создания и управления SEO-контентом блога о пайке.**
 
-| Агент | Файл | Расписание |
-|---|---|---|
-| Бот №1 — SEO-Исследователь | `SKILL-01-seo-researcher.md` | Пн 08:00 |
-| Бот №2 — Архитектор ТЗ | `SKILL-02-content-analyzer.md` | Вт / Чт / Сб 09:00 |
-| Бот №3 — Копирайтер | `SKILL-03-article-writer.md` | Ср / Пт 09:00 |
+Система генерирует статьи, проверяет их на AI-паттерны, экспортирует в WordPress и создаёт интерактивные инструменты — без бэкенда, без платных API.
 
-## Схема работы
+---
+
+## Архитектура
 
 ```
-[Бот №1] → raw_data, competitors, content_plan
-                    ↓
-            [Бот №2] → briefs_ТЗ (4 новых ТЗ + аудит старых)
-                              ↓
-                    [Бот №3] → статьи (1 статья за запуск)
+semantic_core.xlsx  ← единый источник правды
+        │
+        ├── raw_data        — исходные URL/темы
+        ├── clusters        — тематические кластеры
+        ├── competitors     — конкурентный анализ
+        ├── content_plan    — план публикаций (приоритет, статус)
+        ├── interlinking_map — карта перелинковки
+        ├── статьи          — готовые тексты
+        ├── briefs_ТЗ       — ТЗ + GEO/SEO-брифы (SKILL-04)
+        ├── wp_export       — шаблоны для WordPress (SKILL-04 → SKILL-05)
+        └── interactive_tools — 13 инструментов (SKILL-05)
 ```
 
-## Листы таблицы semantic_core
+---
 
-| Лист | Кто пишет | Кто читает |
-|---|---|---|
-| `raw_data` | Бот №1 | Бот №2 |
-| `competitors` | Бот №1 | Бот №2 |
-| `clusters` | Бот №1 | Бот №2 |
-| `content_plan` | Бот №1, №2 | Бот №3 |
-| `interlinking_map` | Бот №1, №2 | Бот №3 |
-| `briefs_ТЗ` | Бот №2 | Бот №3 |
-| `статьи` | Бот №3 | — |
+## Агенты (SKILLs)
 
-## Что нужно поправить в таблице semantic_core
+| # | Файл | Название | Запуск | Что делает |
+|---|------|----------|--------|------------|
+| 01 | [SKILL-01-seo-researcher.md](./SKILL-01-seo-researcher.md) | solder-seo-researcher | Еженедельно | Собирает ключи, кластеризует, пишет ТЗ в `content_plan` |
+| 02 | [SKILL-02-content-analyzer.md](./SKILL-02-content-analyzer.md) | solder-content-analyzer | По запросу | Анализирует конкурентов, находит контентные пробелы |
+| 03 | [SKILL-03-article-writer.md](./SKILL-03-article-writer.md) | solder-article-writer | По запросу | Пишет статью по ТЗ из `briefs_ТЗ`, сохраняет в `статьи` |
+| 04 | [SKILL-04-article-reviewer.md](./SKILL-04-article-reviewer.md) | solder-article-reviewer | После SKILL-03 | Проверяет 18 AI-паттернов, чеклист, экспортирует в `wp_export` |
+| 05 | [SKILL-05-interactive-tools.md](./SKILL-05-interactive-tools.md) | solder-interactive-tools | По запросу `/tool <slug>` | Генерирует HTML/JS-код 13 интерактивных инструментов |
 
-1. **Добавить лист `статьи`** с колонками: `ID_темы`, `Заголовок`, `Slug`, `Кластер`, `Текст_статьи`, `Кол-во_символов`, `Статус`, `Дата_создания`. Без этого листа Бот №3 не может сохранить результат.
-2. **Добавить колонку `дата_обновления`** в лист `competitors` — Бот №1 должен её заполнять, но колонки нет.
-3. **Исправить slug темы #9** (`keramicheskij-или-nihromovyj-nagrevatel`) — содержит кириллицу. Slug должен быть только латиницей и цифрами: `keramicheskij-ili-nihromovyj-nagrevatel`.
-4. **Добавить статус `опубликовано`** в `content_plan` и `briefs_ТЗ` после `написано` — без него нет финального статуса публикации.
-5. **Переименовать файлы в solder_writer**: два файла `09_habr_like_style.md` и `09_voice_and_persona.md` имеют одинаковый номер. Переименовать второй в `10_voice_and_persona.md`, сдвинуть `10_habr_article_openers.md` → `11_habr_article_openers.md`.
-6. **Убрать дублирующую проверку дубликатов**: Бот №1 и Бот №2 оба проверяют дубликаты по разным листам. Ввести единый slug-реестр — колонку `slug` в `content_plan` как мастер-список. Бот №1 проверяет только `content_plan`, Бот №2 проверяет только `briefs_ТЗ` против `content_plan`.
-7. **Сдвинуть расписание Бота №2**: с Пн/Ср/Пт → на Вт/Чт/Сб. В понедельник Бот №1 собирает данные, Бот №2 должен запускаться после, а не одновременно.
+---
+
+## Рабочий процесс
+
+```
+1. SKILL-01  →  ключи и ТЗ в content_plan / briefs_ТЗ
+2. SKILL-03  →  текст статьи в лист «статьи»
+3. SKILL-04  →  проверка + WordPress-шаблон в wp_export
+4. SKILL-05  →  /tool <slug> → HTML/JS-код инструмента
+5. Публикация в WordPress (вручную или через API)
+```
+
+---
+
+## Интерактивные инструменты (SKILL-05)
+
+13 инструментов без бэкенда, без платных сервисов:
+
+### 🔴 Высокий приоритет (делать первыми)
+| Slug | Название | UX |
+|------|----------|----|
+| `/podbor-flyusa/` | Подборщик флюса | Wizard 3 шага |
+| `/podbor-pripoya/` | Подборщик припоя | Форма + результат |
+| `/kalkulator-temperatury-pajki/` | Калькулятор температуры жала | Слайдеры |
+| `/podbor-payalnika/` | Подборщик паяльника | Квиз 4 шага |
+
+### 🟡 Средний приоритет
+| Slug | Название | UX |
+|------|----------|----|
+| `/diagnostika-defekta/` | Диагностика дефекта | Чекбоксы + аккордеон |
+| `/tablica-zhala-payalniki/` | Таблица совместимости жал | Фильтруемая таблица |
+| `/kalkulator-moschnosti/` | Калькулятор мощности | Форма |
+| `/pasta-ili-provod/` | Паста или проволока | Радиокнопки |
+| `/test-svoya-pajka/` | Тест «Проверь свою пайку» | Квиз с картинками |
+
+### 🟢 Низкий приоритет
+| Slug | Название | UX |
+|------|----------|----|
+| `/kalkulator-termousadki/` | Калькулятор термоусадки | 3 поля |
+| `/sravnenie-stancij/` | Сравнение станций | Мультиселект + таблица |
+| `/cheklistt-pered-pajkoj/` | Чеклист перед пайкой | Чекбоксы + прогресс-бар |
+| `/glossarij-pajki/` | Глоссарий пайки | Instant search |
+
+---
+
+## Листы semantic_core.xlsx
+
+### `wp_export` — шаблон экспорта в WordPress
+Каждая готовая статья из SKILL-04 добавляет строку:
+- `H1`, `meta_description`, `[BODY]` в Markdown
+- `[FEATURED IMAGE ALT]`, теги из LSI-брифа
+- Yoast/RankMath поля: Focus Keyword, SEO Title ≤60 символов, Canonical URL
+- Чеклист перелинковки, итог AI-паттернов
+
+### `interactive_tools` — 13 инструментов с приоритетами
+Для каждого: входные параметры, выходной результат, тип UX, связанные slug-статьи, технология (JS/React без бэкенда).
+
+### `briefs_ТЗ` — ТЗ + 5 новых GEO/SEO-колонок (SKILL-04)
+- `SKILL_04_GEO_SEO_ТЗ` — требования к GEO-оптимизации
+- `SKILL_04_Техпроверка` — чеклист перед публикацией
+- `SKILL_04_AI_Crawlability` — инструкция по доступности для AI-ботов
+- `SKILL_04_Schema_JSONLD` — требования к Schema.org JSON-LD
+- `SKILL_04_IndexNow` — инструкция по быстрой индексации
+
+---
+
+## Технические требования
+
+- **Инструменты:** Vanilla JS или React (нет бэкенда, нет платных API)
+- **Core Web Vitals:** LCP < 2.5s, нет тяжёлых бандлов
+- **Адаптив:** от 320px
+- **SEO:** статический HTML-fallback для краулеров
+- **AI-боты:** GPTBot, PerplexityBot, ClaudeBot — не блокировать в robots.txt
+
+---
+
+## Статус проекта
+
+| Компонент | Статус |
+|-----------|--------|
+| SKILL-01 SEO Researcher | ✅ Готов |
+| SKILL-02 Content Analyzer | ✅ Готов |
+| SKILL-03 Article Writer | ✅ Готов |
+| SKILL-04 Article Reviewer | ✅ Готов |
+| SKILL-05 Interactive Tools | ✅ Готов (генерация по команде `/tool <slug>`) |
+| semantic_core.xlsx — wp_export | ✅ Добавлен |
+| semantic_core.xlsx — interactive_tools | ✅ Добавлен (13 инструментов) |
+| Первая статья «Как паять паяльником» | ✅ Написана |
