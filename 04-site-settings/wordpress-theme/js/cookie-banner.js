@@ -1,80 +1,73 @@
+/**
+ * SolderBlog — cookie-banner.js
+ * Показывает баннер если не было ответа.
+ * При «Принять» запускает Яндекс Метрику (если ID задан).
+ */
 (function () {
   'use strict';
 
-  var CONSENT_KEY = 'sb_cookie_consent';
-  var CONSENT_VAL = '1';
+  var COOKIE_KEY = 'sb_cookie_consent';
 
-  // Проверяем, дано ли согласие ранее
-  function hasConsent() {
-    return document.cookie.split(';').some(function (c) {
-      return c.trim().startsWith(CONSENT_KEY + '=');
-    });
+  function getCookie(name) {
+    var match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+  function setCookie(name, value, days) {
+    var d = new Date();
+    d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+    document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + d.toUTCString() + '; path=/; SameSite=Lax';
   }
 
-  // Записываем куку на 365 дней
-  function setConsent() {
-    var expires = new Date();
-    expires.setFullYear(expires.getFullYear() + 1);
-    document.cookie =
-      CONSENT_KEY + '=' + CONSENT_VAL +
-      '; expires=' + expires.toUTCString() +
-      '; path=/; SameSite=Lax';
-  }
+  if (getCookie(COOKIE_KEY)) return;
 
-  // Удаляем куку (отказ)
-  function revokeConsent() {
-    document.cookie =
-      CONSENT_KEY + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax';
-  }
+  // Получаем строки из wp_localize_script
+  var S  = (typeof SolderBlog !== 'undefined' && SolderBlog.strings) ? SolderBlog.strings : {};
+  var privacyUrl = (typeof SolderBlog !== 'undefined') ? SolderBlog.privacyUrl : '/privacy/';
+
+  var text    = S.cookieText    || 'Мы используем куки для аналитики.';
+  var accept  = S.cookieAccept  || 'Принять';
+  var decline = S.cookieDecline || 'Отказаться';
+  var prLink  = S.privacyLink   || 'Политика конфиденциальности';
 
   // Создаём баннер
-  function createBanner() {
-    var banner = document.createElement('div');
-    banner.className = 'cookie-banner';
-    banner.setAttribute('role', 'dialog');
-    banner.setAttribute('aria-label', 'Согласие на использование cookies');
-    banner.setAttribute('aria-live', 'polite');
-    banner.innerHTML =
-      '<p>Мы используем куки для аналитики (Яндекс.Метрика) и улучшения сайта.' +
-      ' <a href="/privacy/" target="_blank" rel="noopener">Политика конфиденциальности</a>.</p>' +
-      '<div class="cookie-banner__actions">' +
-      '<button class="btn btn--primary btn--sm js-cookie-accept">Принять</button>' +
-      '<button class="btn btn--secondary btn--sm js-cookie-decline">Отказаться</button>' +
-      '</div>';
-    return banner;
+  var banner = document.createElement('div');
+  banner.className = 'cookie-banner';
+  banner.setAttribute('role', 'dialog');
+  banner.setAttribute('aria-label', 'Cookie');
+  banner.innerHTML =
+    '<p class="cookie-banner__text">' + text +
+    ' <a href="' + privacyUrl + '" class="cookie-banner__link">' + prLink + '</a></p>' +
+    '<div class="cookie-banner__actions">' +
+    '<button class="btn btn--primary btn--sm" id="sb-cookie-accept">' + accept + '</button>' +
+    '<button class="btn btn--sm cookie-banner__decline" id="sb-cookie-decline">' + decline + '</button>' +
+    '</div>';
+
+  document.body.appendChild(banner);
+
+  // Анимация появления
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () { banner.classList.add('visible'); });
+  });
+
+  function dismiss(value) {
+    setCookie(COOKIE_KEY, value, 365);
+    banner.classList.remove('visible');
+    setTimeout(function () { banner.remove(); }, 300);
   }
 
-  // Инициализация Метрики (если функция определена в functions.php)
-  function initMetrika() {
-    if (typeof window.solderblog_init_ym === 'function') {
-      window.solderblog_init_ym();
-    }
-  }
+  document.getElementById('sb-cookie-accept').addEventListener('click', function () {
+    dismiss('accepted');
+    // Если Яндекс Метрика уже загружена — разрешаем отслеживание
+    if (typeof ym === 'function') ym('reachGoal', 'cookie_accepted');
+  });
 
-  // Показываем баннер
-  function showBanner() {
-    var banner = createBanner();
-    document.body.appendChild(banner);
+  document.getElementById('sb-cookie-decline').addEventListener('click', function () {
+    dismiss('declined');
+  });
 
-    banner.querySelector('.js-cookie-accept').addEventListener('click', function () {
-      setConsent();
-      initMetrika();
-      banner.remove();
-    });
-
-    banner.querySelector('.js-cookie-decline').addEventListener('click', function () {
-      revokeConsent();
-      banner.remove();
-    });
-  }
-
-  // Точка входа
-  document.addEventListener('DOMContentLoaded', function () {
-    if (hasConsent()) {
-      initMetrika(); // Метрика уже разрешена ранее
-    } else {
-      showBanner();
-    }
+  // Закрытие по Escape
+  document.addEventListener('keydown', function handler(e) {
+    if (e.key === 'Escape') { dismiss('dismissed'); document.removeEventListener('keydown', handler); }
   });
 
 })();
