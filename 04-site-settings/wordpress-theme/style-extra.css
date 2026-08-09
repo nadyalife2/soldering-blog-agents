@@ -1,0 +1,200 @@
+/*
+ * SolderBlog — style-extra.css
+ * Стили, которых не было в основном style.css:
+ * - Hero eyebrow
+ * - Фильтр категорий
+ * - Пагинация
+ * - Навигация между статьями
+ * - Страница 404
+ * - Страница инструмента
+ * - Оглавление с активным состоянием
+ * - Sidebar links
+ * - Поиск
+ * - Footer desc
+ */
+
+/* ---- HERO EYEBROW ---- */
+.hero__eyebrow {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--c-accent);
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+/* ---- CATEGORY FILTER ---- */
+.category-filter { margin: 1.5rem auto; }
+.category-filter__inner {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.5rem;
+}
+.category-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.35rem 0.875rem;
+  border: 1px solid var(--c-border);
+  border-radius: 20px;
+  font-size: 0.875rem;
+  color: var(--c-ink-soft);
+  background: var(--c-surface);
+  text-decoration: none;
+  transition: background 0.12s, border-color 0.12s;
+}
+.category-pill:hover {
+  background: var(--c-tag-bg);
+  text-decoration: none;
+}
+.category-pill.active {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: #fff;
+}
+.category-pill__count {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* ---- POST CARD дополнения ---- */
+.post-card__body { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+.post-card__title { font-size: 1.0625rem; margin: 0; line-height: 1.35; }
+.post-card__title a { color: var(--c-ink); }
+.post-card__title a:hover { color: var(--c-accent); text-decoration: none; }
+.post-card__more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--c-accent);
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+.post-card__more:hover { text-decoration: none; opacity: 0.8; }
+.posts-grid--compact { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+
+/* ---- ПАГИНАЦИЯ ---- */
+.pagination { margin: 2.5rem 0; }
+.pagination .page-numbers {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 0.375rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.pagination .page-numbers li { margin: 0; }
+.pagination .page-numbers a,
+.pagination .page-numbers span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.45rem 0.875rem;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-btn);
+  font-size: 0.9375rem;
+  color: var(--c-ink-soft);
+  background: var(--c-surface);
+  text-decoration: none;
+}
+.pagination .page-numbers a:hover { background: var(--c-tag-bg); color: var(--c-ink); }
+.pagination .page-numbers .current { background: var(--c-accent); border-color: var(--c-accent); color: #fff; }
+.pagination .page-numbers .prev,
+.pagination .page-numbers .next { font-weight: 500; }
+
+/* ---- НАВИГАЦИЯ МЕЖДУ СТАТЬЯМИ ---- */
+.article-nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--c-border);
+}
+.article-nav__link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-card);
+  text-decoration: none;
+  transition: box-shadow 0.15s;
+}
+.article-nav__link:hover { box-shadow: var(--shadow-hover); text-decoration: none; }
+.article-nav__link--next { text-align: right; }
+.article-nav__label { font-size: 0.8125rem; color: var(--c-ink-soft); }
+.article-nav__title { font-size: 0.9375rem; font-weight: 600; color: var(--c-ink); }
+@media (max-width: 600px) { .article-nav { grid-template-columns: 1fr; } }
+
+/* ---- ОГЛАВЛЕНИЕ — активная ссылка ---- */
+.toc__list { list-style: decimal; padding-left: 1.25rem; margin: 0; }
+.toc__item { margin-top: 0.4rem; }
+.toc__item--sub { margin-left: 1rem; list-style: disc; }
+.toc__list a { color: var(--c-ink-soft); font-size: 0.9375rem; text-decoration: none; }
+.toc__list a:hover, .toc__list a.active { color: var(--c-accent); }
+
+/* ---- SIDEBAR TOOLS ---- */
+.sidebar-tools { list-style: none; padding: 0; margin: 0; }
+.sidebar-tools li { margin-top: 0; border-bottom: 1px solid var(--c-border); }
+.sidebar-tools li:last-child { border-bottom: none; }
+.sidebar-tools__link {
+  display: block;
+  padding: 0.5rem 0;
+  font-size: 0.9375rem;
+  color: var(--c-ink-soft);
+}
+.sidebar-tools__link:hover { color: var(--c-accent); text-decoration: none; }
+
+/* ---- СТРАНИЦА ИНСТРУМЕНТА ---- */
+.tool-page { padding: 2rem 0 4rem; }
+.tool-header { margin-bottom: 2rem; }
+.tool-header__title { font-size: clamp(1.5rem, 3vw, 2rem); margin-top: 0.75rem; }
+.tool-header__desc { font-size: 1.0625rem; color: var(--c-ink-soft); margin-top: 0.5rem; max-width: 60ch; }
+.tool-seo-text {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--c-border);
+  font-size: 1rem;
+  color: var(--c-ink-soft);
+}
+
+/* ---- 404 ---- */
+.error-404 { padding: 5rem 1.5rem; text-align: center; }
+.error-404__inner { max-width: 480px; margin: 0 auto; }
+.error-404__code { font-size: 6rem; font-weight: 700; color: var(--c-border); line-height: 1; margin: 0; font-family: var(--font-head); }
+.error-404__title { font-size: 1.625rem; margin-top: 0.5rem; }
+.error-404__text { color: var(--c-ink-soft); margin-top: 0.75rem; }
+.error-404__actions { display: flex; gap: 0.75rem; justify-content: center; margin-top: 2rem; flex-wrap: wrap; }
+
+/* ---- CONTENT PAGE (Политика, О сайте) ---- */
+.content-page { padding: 2rem 0 4rem; }
+.content-article { max-width: var(--w-content); }
+.content-header { margin-bottom: 2rem; }
+.content-header__title { font-size: clamp(1.5rem, 3vw, 2.25rem); }
+
+/* ---- АРХИВ: шапка ---- */
+.archive-header { padding: 2rem 0 1rem; }
+.archive-header__title { font-size: clamp(1.5rem, 3vw, 2rem); margin-top: 0.5rem; }
+.archive-header__desc { color: var(--c-ink-soft); margin-top: 0.5rem; max-width: 60ch; }
+
+/* ---- HERO IMAGE PLACEHOLDER ---- */
+.hero__image-placeholder {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: var(--c-tag-bg);
+  border-radius: 8px;
+  border: 1px dashed var(--c-border);
+}
+
+/* ---- FOOTER DESC ---- */
+.footer-col__desc { font-size: 0.875rem; color: var(--c-ink-soft); margin-top: 0.5rem; max-width: 28ch; }
+.footer-col__links { display: flex; flex-direction: column; }
+.footer-legal { display: flex; gap: 1rem; }
+.footer-legal a { color: var(--c-ink-soft); font-size: 0.875rem; }
+.footer-copy { font-size: 0.875rem; }
